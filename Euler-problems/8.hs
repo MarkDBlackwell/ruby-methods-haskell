@@ -1,14 +1,9 @@
-=begin
-Author: Mark D. Blackwell
-Dates:
-(mdb) September 23, 2011 - created
+findGreatestProduct string n_consecutive_digits = maximum products
 
-Part of my learning Haskell.
-Haskell version: 2010.2.0.0
-
-Found at: http://fedner.net/blog/2010/04/06/euler-problem-8/
-Euler's problem #8
-Find the greatest product of five consecutive digits in the 1000-digit number.
-The large number was copied from the above website.
-=end
-
+digits = map (to_i) string
+digitRuns = eachCons digits nConsecutiveDigits
+products = mapWith (*) digitRuns
+max = maximum products
+indices = findIndices (==max) products
+maxDigits = map (!!) digitRuns indices
+to_s = intersperse '\n' [max, indices, maxDigits]

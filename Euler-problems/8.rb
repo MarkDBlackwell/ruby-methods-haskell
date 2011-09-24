@@ -5,6 +5,7 @@ Dates:
 
 Part of my learning Haskell.
 Ruby versions: 1.8.7.
+Haskell version: 2010.2.0.0
 
 Found at: http://fedner.net/blog/2010/04/06/euler-problem-8/
 Euler's problem #8
@@ -16,11 +17,11 @@ class FindGreatestProduct
 
   def initialize string, n_consecutive_digits
     digits = string.chars.map &:to_i
-    consecutive = digits.each_cons n_consecutive_digits
-    products = consecutive.map{|a| a.inject &:*}
+    digit_runs = digits.each_cons n_consecutive_digits
+    products = digit_runs.map{|a| a.inject &:*}
     @max = products.max
-    @indices = (0...products.length).select{|i| @max==(products.at i)}
-    @max_digits = consecutive.to_a.values_at *@indices
+    @indices = (0...products.length).select{|i| products.at(i)==@max}
+    @max_digits = digit_runs.to_a.values_at *@indices
   end
 
   def to_s
