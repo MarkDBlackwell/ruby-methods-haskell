@@ -31,8 +31,10 @@ ski <~slj@c83-254-21-112.bredband.comhem.se> “Stefan Ljungstrand”:
   n < 0 = error ("eachCons _ " ++ showsPrec 11 n "")
 -}
 
-module RubyMethods.EachCons (eachCons, testEachCons)
-  where
+module RubyMethods.EachCons
+( eachCons
+, testEachCons
+) where
 
   import Data.List (transpose)
 
