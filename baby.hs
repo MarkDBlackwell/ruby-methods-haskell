@@ -27,3 +27,5 @@ zipWith' f (x:xs) (y:ys) = f x y : zipWith' f xs ys
 addThree :: (Num a) => a -> a -> a -> a
 addThree = \x -> \y -> \z -> x + y + z
 listOfFuns = map (*) [0..]
+fib n|n<=0=1|n==1=1|otherwise=fib(n-1)+fib(n-2)
+fibs=0:1:zipWith(+)fibs(tail fibs)

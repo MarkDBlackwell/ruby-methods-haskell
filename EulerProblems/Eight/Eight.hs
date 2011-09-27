@@ -15,29 +15,51 @@ Find the greatest product of five consecutive digits in the 1000-digit number.
 Because I don't see them in the Haskell library, I implemented various of Ruby's methods.
 -}
 
-module EulerProblems.Eight (result)
+module EulerProblems.Eight (result, eachCons)
   where
 
   import Data.Char (digitToInt,isDigit)
   import Data.List
 
--- Ruby Enumerable#each_cons
+{-
+Ruby Enumerable#each_cons
+For:
+  eachCons 4 [1,2,3,4,5,6] would be [[1,2,3,4],[2,3,4,5],[3,4,5,6]]
+This works for infinite lists!
+Also works for each consecutive zero and negative.
 
-  eachCons :: [a] -> Int -> [[a]]
-  eachCons x n
-    | n <= 0 = [[]]
+From IRC #haskell on 9/26/2011, got:
+From geheimdienst:
+  map (take 4) $ tails [1..6]
+From Cale:
+  (zipWith const <*> drop 4) . map (take 4) . tails $ [1..10]
+From DanBurton:
+  foo2 n xs = take (length xs - n + 1) . map (take n) . tails $ xs
+From JoeyA
+  eachCons n = takeWhile ((== n) . length) . map (take n) . tails
+From ski:
+  n < 0 = error ("eachCons _ " ++ showsPrec 11 n "")
+Removed:
+  | n <= 0 = [[]]
+  | n <= 0 = error ("eachCons " ++ showsPrec 11 n "")
+
+TODO: make this work for negative consecutive from infinite lists
+-}
+
+  eachCons :: Int -> [a] -> [[a]]
+  eachCons n x
+    | n == 0 = []:[ [] | _<-x]
+    | n <  0 = eachCons (-n) x -- not infinite list
     | otherwise = consecutives
     where
       sequences = map (`drop` x) [0..(n-1)]
-      isFullLength :: [a] -> Bool
-      isFullLength y = n==length y
-      consecutives = filter (isFullLength) $ transpose sequences
+      consecutives = [y | y <- transpose sequences, n==length y]
 
   findGreatestProduct :: String -> Int -> (Int, [Int], [[Int]])
   findGreatestProduct string nConsecutiveDigits = (maxProduct, indices, maxDigits)
     where
     digits = map digitToInt string
-    digitRuns = eachCons digits nConsecutiveDigits
+    digitRuns = eachCons nConsecutiveDigits digits
     products = map product digitRuns
     maxProduct = maximum products
     indices = findIndices (==maxProduct) products
