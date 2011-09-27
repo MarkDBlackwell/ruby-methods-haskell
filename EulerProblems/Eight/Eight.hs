@@ -1,7 +1,8 @@
 {-
 Author: Mark D. Blackwell
 Change dates:
-(mdb) September 23, 2011 - created
+(mdb) September 23, 2011 - create
+(mdb) September 27, 2011 - add zero and negative to eachCons
 
 My first Haskell program.
 Haskell version: 2010.2.0.0
@@ -10,12 +11,12 @@ Euler's problem #8
 Found at: http://fedner.net/blog/2010/04/06/euler-problem-8/
 
 Find the greatest product of five consecutive digits in the 1000-digit number.
-(The large number, below, was copied from the above website.)
+(The large number below was copied from the above website.)
 
-Because I don't see them in the Haskell library, I implemented various of Ruby's methods.
+Because I didn't see it in the Haskell library, I implemented Ruby's method, Enumerable#each_cons. (The people on IRC #haskell didn't think it was there, either.)
 -}
 
-module EulerProblems.Eight (result, eachCons)
+module EulerProblems.Eight (result, eachCons, testEachCons)
   where
 
   import Data.Char (digitToInt,isDigit)
@@ -26,60 +27,81 @@ Ruby Enumerable#each_cons
 For:
   eachCons 4 [1,2,3,4,5,6] would be [[1,2,3,4],[2,3,4,5],[3,4,5,6]]
 
-`ski' helped me the most on this next:
+Thanks to Stefan Ljungstrand (ski on #haskell) most for helping me to appreciate this next concept:
 
-This works for zero and negative 'each consecutive', fitting into the pattern:
+eachCons is consistent with zero and negative values of 'each consecutive', fitting into a pattern, so that:
 
-n result
-4 []
-3 [[1,2,3]]
-2 [[1,2],[2,3]]
-1 [[1],[2],[3]]
-0 [[],[],[],[]]
-(-1) [[1],[2],[3]]
-(-2) [[2,1],[3,2]]
-(-3) [[3,2,1]]
-(-4) []
-e.g.,  map (`eachCons` [1..3]) [-4,-3..4]  gives:
-[ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]], [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
-ghci> 
-Also works for infinite lists, with `take 2 $ eachCons n [1..]':
+  map (`eachCons` [1..3]) [-4,-3..4]
 
-n result
-2 [[1,2],[2,3]]
-1 [[1],[2]]
-0 [[],[]]
-(-1) [[1],[2]]
-(-2) [[2,1],[3,2]]
-i.e.,  map (take 2) $ map (`eachCons` [1..]) [-2,-1..2]  gives:
-[ [[2,1],[3,2]], [[1],[2]], [[],[]], [[1],[2]], [[1,2],[2,3]] ]
+now gives:
 
+  [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]], [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
 
+Other suggestions:
 
-From IRC #haskell on 9/26/2011, got:
-From geheimdienst:
+From IRC #haskell on 9/26/2011, I received suggestions from:
+geheimdienst:
   map (take 4) $ tails [1..6]
-From Cale:
+Cale <~Cale@CPE00026f8481b6-CM00222d55727d.cpe.net.cable.rogers.com> “Cale Gibbard”:
   (zipWith const <*> drop 4) . map (take 4) . tails $ [1..10]
-From DanBurton:
+DanBurton:
   foo2 n xs = take (length xs - n + 1) . map (take n) . tails $ xs
-From JoeyA
+JoeyA:
   eachCons n = takeWhile ((== n) . length) . map (take n) . tails
-From ski:
+ski <~slj@c83-254-21-112.bredband.comhem.se> “Stefan Ljungstrand”:
   n < 0 = error ("eachCons _ " ++ showsPrec 11 n "")
-Removed:
-  | n <= 0 = [[]]
 -}
 
   eachCons :: Int -> [a] -> [[a]]
   eachCons n x
-    | n == 0 = []: [ [] | _ <- x] -- Add one: fit the progression.
-    | n  < 0 = reverseConsecutives
-    | otherwise = consecutives
+    | n  < 0 = reversed
+    | n == 0 = []: [ [] | _ <- x] -- Add one, to fit the progression.
+    | n  > 0 = consecutives
     where
+      reversed  = map reverse $ eachCons (-n) x
       sequences = map (`drop` x) [0..(n-1)]
       consecutives = [y | y <- transpose sequences, n==length y]
-      reverseConsecutives = map reverse $ eachCons (-n) x
+
+  testEachCons = all (==True)
+    [ finiteZero,     infiniteZero
+    , finitePositive, infinitePositive
+    , finiteNegative, infiniteNegative
+    ]
+    where
+    infiniteMap, finiteMap :: [Int] -> [[[Int]]]
+    infiniteMap = map (`eachCons` infiniteExample)
+    finiteMap   = map (`eachCons`   finiteExample)
+
+    infiniteExample = [examplesLowest..]
+    finiteExample   = [examplesLowest..finiteExampleHighest]
+
+    positive = [positiveHighest,(pred positiveHighest)..examplesLowest]
+    negative = map negate positive
+
+    examplesLowest = 1
+    finiteExampleHighest = 3
+    positiveHighest = 4
+    shortLength = 2
+    zeroLength = 0
+
+    infiniteZero =
+      (take shortLength $ eachCons zeroLength infiniteExample)  
+      ==
+      (take shortLength $ repeat [])
+    finiteZero =
+      (eachCons zeroLength finiteExample)  
+      ==
+      (take (succ $ length finiteExample) $ repeat [])
+
+    infinitePositive = (map (take shortLength) $ infiniteMap positive)==
+      [ [[1,2,3,4],[2,3,4,5]], [[1,2,3],[2,3,4]], [[1,2],[2,3]], [[1],[2]] ]
+    infiniteNegative = (map (take shortLength) $ infiniteMap negative)==
+      [ [[4,3,2,1],[5,4,3,2]], [[3,2,1],[4,3,2]], [[2,1],[3,2]], [[1],[2]] ]
+
+    finitePositive = (finiteMap positive)==
+      [ [], [[1,2,3]], [[1,2],[2,3]], [[1],[2],[3]] ]
+    finiteNegative = (finiteMap negative)==
+      [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]] ]
 
   findGreatestProduct :: String -> Int -> (Int, [Int], [[Int]])
   findGreatestProduct string nConsecutiveDigits = (maxProduct, indices, maxDigits)
