@@ -25,8 +25,36 @@ module EulerProblems.Eight (result, eachCons)
 Ruby Enumerable#each_cons
 For:
   eachCons 4 [1,2,3,4,5,6] would be [[1,2,3,4],[2,3,4,5],[3,4,5,6]]
-This works for infinite lists!
-Also works for each consecutive zero and negative.
+
+`ski' helped me the most on this next:
+
+This works for zero and negative 'each consecutive', fitting into the pattern:
+
+n result
+4 []
+3 [[1,2,3]]
+2 [[1,2],[2,3]]
+1 [[1],[2],[3]]
+0 [[],[],[],[]]
+(-1) [[1],[2],[3]]
+(-2) [[2,1],[3,2]]
+(-3) [[3,2,1]]
+(-4) []
+e.g.,  map (`eachCons` [1..3]) [-4,-3..4]  gives:
+[ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]], [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
+ghci> 
+Also works for infinite lists, with `take 2 $ eachCons n [1..]':
+
+n result
+2 [[1,2],[2,3]]
+1 [[1],[2]]
+0 [[],[]]
+(-1) [[1],[2]]
+(-2) [[2,1],[3,2]]
+i.e.,  map (take 2) $ map (`eachCons` [1..]) [-2,-1..2]  gives:
+[ [[2,1],[3,2]], [[1],[2]], [[],[]], [[1],[2]], [[1,2],[2,3]] ]
+
+
 
 From IRC #haskell on 9/26/2011, got:
 From geheimdienst:
@@ -41,19 +69,17 @@ From ski:
   n < 0 = error ("eachCons _ " ++ showsPrec 11 n "")
 Removed:
   | n <= 0 = [[]]
-  | n <= 0 = error ("eachCons " ++ showsPrec 11 n "")
-
-TODO: make this work for negative consecutive from infinite lists
 -}
 
   eachCons :: Int -> [a] -> [[a]]
   eachCons n x
-    | n == 0 = []:[ [] | _<-x]
-    | n <  0 = eachCons (-n) x -- not infinite list
+    | n == 0 = []: [ [] | _ <- x] -- Add one: fit the progression.
+    | n  < 0 = reverseConsecutives
     | otherwise = consecutives
     where
       sequences = map (`drop` x) [0..(n-1)]
       consecutives = [y | y <- transpose sequences, n==length y]
+      reverseConsecutives = map reverse $ eachCons (-n) x
 
   findGreatestProduct :: String -> Int -> (Int, [Int], [[Int]])
   findGreatestProduct string nConsecutiveDigits = (maxProduct, indices, maxDigits)
