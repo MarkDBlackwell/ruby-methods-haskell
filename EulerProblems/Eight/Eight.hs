@@ -29,13 +29,7 @@ For:
 
 Thanks to Stefan Ljungstrand (ski on #haskell) most for helping me to appreciate this next concept:
 
-eachCons is consistent with zero and negative values of 'each consecutive', fitting into a pattern, so that:
-
-  map (`eachCons` [1..3]) [-4,-3..4]
-
-now gives:
-
-  [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]], [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
+Good if eachCons is consistent with zero and negative values of 'each consecutive', fitting into a pattern. (See the test.)
 
 Other suggestions:
 
@@ -55,7 +49,7 @@ ski <~slj@c83-254-21-112.bredband.comhem.se> “Stefan Ljungstrand”:
   eachCons :: Int -> [a] -> [[a]]
   eachCons n x
     | n  < 0 = reversed
-    | n == 0 = []: [ [] | _ <- x] -- Add one, to fit the progression.
+    | n == 0 = []: [ [] | _ <- x] -- Add one, to fit the pattern.
     | n  > 0 = consecutives
     where
       reversed  = map reverse $ eachCons (-n) x
@@ -66,6 +60,7 @@ ski <~slj@c83-254-21-112.bredband.comhem.se> “Stefan Ljungstrand”:
     [ finiteZero,     infiniteZero
     , finitePositive, infinitePositive
     , finiteNegative, infiniteNegative
+    , pattern
     ]
     where
     infiniteMap, finiteMap :: [Int] -> [[[Int]]]
@@ -102,6 +97,9 @@ ski <~slj@c83-254-21-112.bredband.comhem.se> “Stefan Ljungstrand”:
       [ [], [[1,2,3]], [[1,2],[2,3]], [[1],[2],[3]] ]
     finiteNegative = (finiteMap negative)==
       [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]] ]
+
+    pattern = (finiteMap $ negative ++ [0] ++ reverse positive)==
+      [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]], [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
 
   findGreatestProduct :: String -> Int -> (Int, [Int], [[Int]])
   findGreatestProduct string nConsecutiveDigits = (maxProduct, indices, maxDigits)
