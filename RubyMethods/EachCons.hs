@@ -29,6 +29,12 @@ JoeyA:
   eachCons n = takeWhile ((== n) . length) . map (take n) . tails
 ski <~slj@c83-254-21-112.bredband.comhem.se> “Stefan Ljungstrand”:
   n < 0 = error ("eachCons _ " ++ showsPrec 11 n "")
+For a while, I had negative consecutives. Later, ski told me negatives were inconsistent.
+
+Early, I think somebody suggested I could say, though it doesn't work for infinite lists, e.g.:
+  [x | x <- subsequences [1,2,3,4,5], isInfixOf x [1,2,3,4,5], 4 == length x]
+Produces:
+  [ [1,2,3,4], [2,3,4,5] ]
 -}
 
 module RubyMethods.EachCons
@@ -40,18 +46,17 @@ module RubyMethods.EachCons
 
   eachCons :: Int -> [a] -> [[a]]
   eachCons n x
-    | n  < 0 = reversed
+    | n  < 0                   = error ("eachCons " ++ showsPrec 11 n "")
+    | n  > (length $ take n x) = error ("eachCons " ++ showsPrec 11 n "") -- don't know how to put x in there.
     | n == 0 = []: [ [] | _ <- x] -- Add one, to fit the pattern.
     | n  > 0 = consecutives
     where
-      reversed  = map reverse $ eachCons (-n) x
       sequences = map (`drop` x) [0..(n-1)]
       consecutives = [y | y <- transpose sequences, n==length y]
 
   testEachCons = all (==True)
     [ finiteZero,     infiniteZero
     , finitePositive, infinitePositive
-    , finiteNegative, infiniteNegative
     , pattern
     ]
     where
@@ -63,7 +68,6 @@ module RubyMethods.EachCons
     finiteExample   = [examplesLowest..finiteExampleHighest]
 
     positive = [positiveHighest,(pred positiveHighest)..examplesLowest]
-    negative = map negate positive
 
     examplesLowest = 1
     finiteExampleHighest = 3
@@ -72,24 +76,19 @@ module RubyMethods.EachCons
     zeroLength = 0
 
     infiniteZero =
-      (take shortLength $ eachCons zeroLength infiniteExample)  
+      (take shortLength $ eachCons zeroLength infiniteExample)
       ==
       (take shortLength $ repeat [])
     finiteZero =
-      (eachCons zeroLength finiteExample)  
+      (eachCons zeroLength finiteExample)
       ==
       (take (succ $ length finiteExample) $ repeat [])
 
     infinitePositive = (map (take shortLength) $ infiniteMap positive)==
       [ [[1,2,3,4],[2,3,4,5]], [[1,2,3],[2,3,4]], [[1,2],[2,3]], [[1],[2]] ]
-    infiniteNegative = (map (take shortLength) $ infiniteMap negative)==
-      [ [[4,3,2,1],[5,4,3,2]], [[3,2,1],[4,3,2]], [[2,1],[3,2]], [[1],[2]] ]
 
     finitePositive = (finiteMap positive)==
       [ [], [[1,2,3]], [[1,2],[2,3]], [[1],[2],[3]] ]
-    finiteNegative = (finiteMap negative)==
-      [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]] ]
 
-    pattern = (finiteMap $ negative ++ [0] ++ reverse positive)==
-      [ [], [[3,2,1]], [[2,1],[3,2]], [[1],[2],[3]], [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
-
+    pattern = (finiteMap $ [0] ++ reverse positive)==
+      [ [[],[],[],[]], [[1],[2],[3]], [[1,2],[2,3]], [[1,2,3]], [] ]
